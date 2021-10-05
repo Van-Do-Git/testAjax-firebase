@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <title>Testing file upload</title>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+</head>
+
+<body>
+<input type="file" value="upload" accept=".jpg" id="fileButton">
+<input type="hidden" id="avatar">
+<input type="text" id="username">
+<input type="text" id="password">
+<input type="hidden" id="token">
+
+<button onclick="createUser()">Create</button>
+<h1>Hello GFG</h1>
+<div id="imgDiv"></div>
+<script src="https://www.gstatic.com/firebasejs/4.2.0/firebase.js"></script>
+<script type="text/javascript">
+    $(document).ready(function () {
+        let user = {username: "admin", password: "123456"};
+        $.ajax({
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+
+            },
+            method: "POST",
+            data: JSON.stringify(user),
+            //tên API
+            url: "http://localhost:8080/login",
+            //xử lý khi thành công
+            success: function (data) {
+                document.getElementById("token").value = data;
+            }
+        });
+        event.preventDefault()
+    });
+    const firebaseConfig = {
+        apiKey: "AIzaSyAW8VF35-_YFnNNBMT9RAjzCHj-SUqR8Uw",
+        authDomain: "filebase-70567.firebaseapp.com",
+        projectId: "filebase-70567",
+        storageBucket: "filebase-70567.appspot.com",
+        messagingSenderId: "370746607348",
+        appId: "1:370746607348:web:b17a663c94df4db78c00a1",
+        measurementId: "G-8VZX3F9WF8"
+    };
+    firebase.initializeApp(firebaseConfig);
+    let fbBucketName = 'images';
+    let fileButton = document.getElementById('fileButton');
+    fileButton.addEventListener('change', function (e) {
+        let file = e.target.files[0];
+        let storageRef = firebase.storage().ref(`${fbBucketName}/${file.name}`);
+        let uploadTask = storageRef.put(file);
+        uploadTask.on(firebase.storage.TaskEvent.STATE_CHANGED,
+            function (snapshot) {
+                switch (snapshot.state) {
+                    case firebase.storage.TaskState.PAUSED: // or 'paused'
+                        break;
+                    case firebase.storage.TaskState.RUNNING: // or 'running'
+                        break;
+                }
+            },
+            function (error) {
+                switch (error.code) {
+                    case 'storage/unauthorized':
+                        break;
+                    case 'storage/canceled':
+                        break;
+                    case 'storage/unknown':
+                        break;
+                }
+            }, function () {
+                let downloadURL = uploadTask.snapshot.downloadURL;
+                document.getElementById("imgDiv").innerHTML = "<img src="+downloadURL+">";
+            });
+    });
+    function createUser() {
+        let username = $('#username').val();
+        let password = $('#password').val();
+        let avatar = $('#avatar').val();
+        let user = {username: username, password: password, avatar: avatar};
+        $.ajax({
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'Authorization': $('#token').val()
+            },
+            method: "POST",
+            data: JSON.stringify(user),
+            //tên API
+            url: "http://localhost:8080/users",
+            //xử lý khi thành công
+            success: function (data) {
+                alert(data);
+            }
+        })
+    }
+</script>
+</body>
+</html>
